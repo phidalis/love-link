@@ -9,7 +9,7 @@ let pendingGalleryFiles = [];   // Raw File objects waiting to be uploaded
 // ─── Cloudinary Upload via Render Proxy ──────────────────────────────────────
 // Your Render backend should expose POST /upload-image
 // It receives { image: <base64 data URI> } and returns { url: <cloudinary URL> }
-const RENDER_UPLOAD_URL = 'https://love-link-n34l.onrender.com';
+const RENDER_UPLOAD_URL = 'https://love-link.onrender.com/upload-image';
 
 function truncateUrl(url, maxLen = 32) {
     if (!url || url.length <= maxLen) return url;
