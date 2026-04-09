@@ -1,8 +1,60 @@
 // ─── State ───────────────────────────────────────────────────────────────────
 let currentUser = null;
 let selectedPlan = '';   // empty until user explicitly chooses a plan
-let uploadedPhoto = null;
-let uploadedGallery = [];
+let uploadedPhoto = null;       // Cloudinary URL (string) after upload
+let uploadedGallery = [];       // Array of Cloudinary URLs after upload
+let pendingPhotoFile = null;    // Raw File object waiting to be uploaded
+let pendingGalleryFiles = [];   // Raw File objects waiting to be uploaded
+
+// ─── Cloudinary Upload via Render Proxy ──────────────────────────────────────
+// Your Render backend should expose POST /upload-image
+// It receives { image: <base64 data URI> } and returns { url: <cloudinary URL> }
+const RENDER_UPLOAD_URL = 'https://your-render-app.onrender.com/upload-image';
+
+function truncateUrl(url, maxLen = 32) {
+    if (!url || url.length <= maxLen) return url;
+    return url.substring(0, maxLen) + '…';
+}
+
+async function uploadToCloudinary(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+                const res = await fetch(RENDER_UPLOAD_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: ev.target.result })
+                });
+                if (!res.ok) throw new Error('Upload failed: ' + res.status);
+                const data = await res.json();
+                if (!data.url) throw new Error('No URL returned from server');
+                resolve(data.url);
+            } catch (err) {
+                reject(err);
+            }
+        };
+        reader.onerror = () => reject(new Error('File read failed'));
+        reader.readAsDataURL(file);
+    });
+}
+
+function showUploadProgress(message) {
+    let el = document.getElementById('uploadProgressBanner');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'uploadProgressBanner';
+        el.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ff4d6d,#ff758f);color:white;padding:14px 28px;border-radius:40px;font-weight:600;font-size:0.9rem;z-index:9999;box-shadow:0 8px 24px rgba(255,77,109,0.4);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center;';
+        document.body.appendChild(el);
+    }
+    el.innerHTML = `<i class="fas fa-spinner fa-spin"></i><span>${message}</span>`;
+    el.style.display = 'flex';
+}
+
+function hideUploadProgress() {
+    const el = document.getElementById('uploadProgressBanner');
+    if (el) el.style.display = 'none';
+}
 
 // ─── Firestore Helpers ───────────────────────────────────────────────────────
 async function getAdminSettings() {
@@ -498,7 +550,7 @@ function showProfileError(message) {
     setTimeout(() => banner.remove(), 5000);
 }
 
-// ─── Event Listeners (Images stay local) ─────────────────────────────────────
+// ─── Event Listeners ─────────────────────────────────────────────────────────
 function setupEventListeners() {
     document.getElementById('uploadPhotoBtn').addEventListener('click', () => {
         document.getElementById('photoInput').click();
@@ -507,12 +559,27 @@ function setupEventListeners() {
     document.getElementById('photoInput').addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        // Show local preview immediately
         const reader = new FileReader();
         reader.onload = (ev) => {
-            uploadedPhoto = ev.target.result;
-            document.getElementById('profileImage').src = uploadedPhoto;
+            document.getElementById('profileImage').src = ev.target.result;
         };
         reader.readAsDataURL(file);
+
+        // Store file reference for upload on submit
+        pendingPhotoFile = file;
+
+        // Show filename label beneath preview
+        let urlLabel = document.getElementById('profilePhotoUrlLabel');
+        if (!urlLabel) {
+            urlLabel = document.createElement('p');
+            urlLabel.id = 'profilePhotoUrlLabel';
+            urlLabel.style.cssText = 'font-size:0.72rem;color:#aaa;margin-top:6px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            const photoUploadDiv = document.querySelector('.photo-upload');
+            if (photoUploadDiv) photoUploadDiv.appendChild(urlLabel);
+        }
+        urlLabel.textContent = `📎 ${file.name.length > 28 ? file.name.substring(0,28)+'…' : file.name} (will upload on save)`;
     });
 
     document.getElementById('profileForm').addEventListener('submit', (e) => {
@@ -521,7 +588,13 @@ function setupEventListeners() {
     });
 }
 
-// ─── Gallery Functions (Images stay local) ───────────────────────────────────
+// ─── Gallery Functions ────────────────────────────────────────────────────────
+// uploadedGallery = already-uploaded Cloudinary URLs (from existing profile)
+// pendingGalleryFiles = new File objects chosen but not yet uploaded
+// pendingGalleryPreviews = matching base64 previews for display
+
+let pendingGalleryPreviews = [];
+
 function setupGalleryUpload() {
     const addBtn = document.getElementById('addGalleryBtn');
     const galleryInput = document.getElementById('galleryInput');
@@ -533,13 +606,15 @@ function setupGalleryUpload() {
     if (galleryInput) {
         galleryInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
-            const remaining = 6 - uploadedGallery.length;
+            const totalExisting = uploadedGallery.length + pendingGalleryFiles.length;
+            const remaining = 6 - totalExisting;
             const toProcess = files.slice(0, remaining);
 
             toProcess.forEach(file => {
+                pendingGalleryFiles.push(file);
                 const reader = new FileReader();
                 reader.onload = (ev) => {
-                    uploadedGallery.push(ev.target.result);
+                    pendingGalleryPreviews.push(ev.target.result);
                     renderGalleryPreviews();
                 };
                 reader.readAsDataURL(file);
@@ -557,23 +632,49 @@ function renderGalleryPreviews() {
     const grid = document.getElementById('galleryGrid');
     if (!grid) return;
 
-    grid.innerHTML = uploadedGallery.map((src, i) => `
+    // Already-uploaded URLs
+    const uploadedItems = uploadedGallery.map((url, i) => `
         <div class="gallery-thumb" style="position:relative;">
-            <img src="${src}" style="width:100%;height:100px;object-fit:cover;border-radius:12px;border:2px solid #ffe2ec;">
-            <button type="button" onclick="removeGalleryImage(${i})"
+            <img src="${url}" style="width:100%;height:100px;object-fit:cover;border-radius:12px;border:2px solid #ffe2ec;">
+            <p style="font-size:0.65rem;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:2px 4px 0;" title="${url}">${truncateUrl(url)}</p>
+            <button type="button" onclick="removeUploadedGalleryImage(${i})"
                 style="position:absolute;top:4px;right:4px;background:#ff4d6d;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.75rem;line-height:1;">✕</button>
         </div>
-    `).join('');
+    `);
 
+    // Pending (not-yet-uploaded) previews
+    const pendingItems = pendingGalleryPreviews.map((src, i) => `
+        <div class="gallery-thumb" style="position:relative;">
+            <img src="${src}" style="width:100%;height:100px;object-fit:cover;border-radius:12px;border:2px dashed #ffb3c1;">
+            <p style="font-size:0.65rem;color:#ffb3c1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:2px 4px 0;">⏳ pending…</p>
+            <button type="button" onclick="removePendingGalleryImage(${i})"
+                style="position:absolute;top:4px;right:4px;background:#ff4d6d;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.75rem;line-height:1;">✕</button>
+        </div>
+    `);
+
+    grid.innerHTML = [...uploadedItems, ...pendingItems].join('');
+
+    const total = uploadedGallery.length + pendingGalleryFiles.length;
     const addBtn = document.getElementById('addGalleryBtn');
     if (addBtn) {
-        addBtn.style.display = uploadedGallery.length >= 6 ? 'none' : 'flex';
-        addBtn.querySelector('span').textContent = `Add Photos (${uploadedGallery.length}/6)`;
+        addBtn.style.display = total >= 6 ? 'none' : 'flex';
+        addBtn.querySelector('span').textContent = `Add Photos (${total}/6)`;
     }
 }
 
 window.removeGalleryImage = function(index) {
     uploadedGallery.splice(index, 1);
+    renderGalleryPreviews();
+};
+
+window.removeUploadedGalleryImage = function(index) {
+    uploadedGallery.splice(index, 1);
+    renderGalleryPreviews();
+};
+
+window.removePendingGalleryImage = function(index) {
+    pendingGalleryFiles.splice(index, 1);
+    pendingGalleryPreviews.splice(index, 1);
     renderGalleryPreviews();
 };
 
@@ -625,7 +726,7 @@ function highlightSelectedPackage(plan) {
     if (el) el.style.border = '3px solid #ff4d6d';
 }
 
-// ─── Complete Profile (Firestore) ───────────────────────────────────────────
+// ─── Complete Profile (Cloudinary + Firestore) ───────────────────────────────
 async function completeProfile() {
     const lookingFor = document.getElementById('lookingFor').value;
     const passion = document.getElementById('passion').value;
@@ -657,6 +758,46 @@ async function completeProfile() {
     const dealBreakers = [];
     document.querySelectorAll('.checkbox-group input:checked').forEach(cb => dealBreakers.push(cb.value));
 
+    // ── Upload images to Cloudinary via Render proxy ─────────────────────────
+    const submitBtn = document.getElementById('submitProfile');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading images…';
+
+    // Upload profile photo if a new file was chosen
+    if (pendingPhotoFile) {
+        const totalUploads = 1 + pendingGalleryFiles.length;
+        showUploadProgress(`Uploading profile photo (1/${totalUploads})…`);
+        try {
+            const url = await uploadToCloudinary(pendingPhotoFile);
+            uploadedPhoto = url;
+            pendingPhotoFile = null;
+            document.getElementById('profileImage').src = url;
+            const urlLabel = document.getElementById('profilePhotoUrlLabel');
+            if (urlLabel) urlLabel.textContent = truncateUrl(url);
+        } catch (err) {
+            console.error('Profile photo upload failed:', err);
+            showProfileError('⚠️ Profile photo upload failed — check your Render server URL.');
+        }
+    }
+
+    // Upload each pending gallery file
+    for (let i = 0; i < pendingGalleryFiles.length; i++) {
+        showUploadProgress(`Uploading gallery photo ${i + 1}/${pendingGalleryFiles.length}…`);
+        try {
+            const url = await uploadToCloudinary(pendingGalleryFiles[i]);
+            uploadedGallery.push(url);
+        } catch (err) {
+            console.error(`Gallery photo ${i + 1} failed:`, err);
+        }
+    }
+    pendingGalleryFiles = [];
+    pendingGalleryPreviews = [];
+    hideUploadProgress();
+    renderGalleryPreviews();
+
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving profile…';
+
+    // ── Build Firestore document ─────────────────────────────────────────────
     currentUser.lookingFor = lookingFor;
     currentUser.passion = passion;
     currentUser.firstDate = firstDate;
@@ -667,7 +808,7 @@ async function completeProfile() {
     currentUser.diet = diet;
     currentUser.dealBreakers = dealBreakers;
     currentUser.profileCompleted = true;
-    currentUser.gallery = uploadedGallery;
+    currentUser.gallery = uploadedGallery; // Cloudinary URLs only
 
     if (selectedPlan !== 'free') {
         currentUser.isPremium = true;
@@ -678,22 +819,15 @@ async function completeProfile() {
         localStorage.setItem('lovelink_premium', 'false');
     }
 
-    if (uploadedPhoto) currentUser.image = uploadedPhoto;
-
-    // Build a Firestore-safe copy — never store raw base64 blobs in Firestore.
-    // Base64 images can be several MB each, quickly exceeding Firestore's 1 MB
-    // document limit and blowing up localStorage when the doc is read back.
-    // We keep only a placeholder so the field exists but stays small.
-    const firestoreUser = { ...currentUser };
-    if (firestoreUser.image && firestoreUser.image.startsWith('data:')) {
-        firestoreUser.image = `https://ui-avatars.com/api/?background=ff4d6d&color=fff&name=${encodeURIComponent(firestoreUser.name)}&size=200`;
-    }
-    if (firestoreUser.gallery && Array.isArray(firestoreUser.gallery)) {
-        firestoreUser.gallery = firestoreUser.gallery.filter(img => !img.startsWith('data:'));
+    // Set profile image: Cloudinary URL > existing URL > avatar fallback
+    if (uploadedPhoto) {
+        currentUser.image = uploadedPhoto;
+    } else if (!currentUser.image || currentUser.image.startsWith('data:')) {
+        currentUser.image = `https://ui-avatars.com/api/?background=ff4d6d&color=fff&name=${encodeURIComponent(currentUser.name)}&size=200`;
     }
 
-    // Save to Firestore
-    await setDoc(doc(db, 'users', currentUser.id), firestoreUser, { merge: true });
+    // All images are now Cloudinary URLs — safe to store directly in Firestore
+    await setDoc(doc(db, 'users', currentUser.id), { ...currentUser }, { merge: true });
 
     window.location.href = 'dashboard.html';
 }
