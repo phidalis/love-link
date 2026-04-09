@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>LoveLink Premium | Find Your Perfect Match</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyC_H3OGktcvRhUsM2g7O_vf4WFQ5ucZ0xw",
+    authDomain: "lovelink-97087.firebaseapp.com",
+    projectId: "lovelink-97087",
+    storageBucket: "lovelink-97087.firebasestorage.app",
+    messagingSenderId: "962378928673",
+    appId: "1:962378928673:web:aee8799e9f824afa2fc960"
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  window.auth = getAuth(app);
+  window.db = getFirestore(app);
+  window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+  window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+  window.onAuthStateChanged = onAuthStateChanged;
+  window.doc = doc;
+  window.setDoc = setDoc;
+  window.getDoc = getDoc;
+  window.getDocs = getDocs;
+  window.collection = collection;
+  window.query = query;
+  window.where = where;
+  window.updateDoc = updateDoc;
+  window.arrayUnion = arrayUnion;
+  window.arrayRemove = arrayRemove;
+</script>
+</head>
+<body>
+    <!-- Floating Navigation / CTA Bar -->
+    <div class="floating-bar">
+        <div class="logo-small">
+            <i class="fas fa-heart" style="color: #ff4d6d;"></i> <span>LoveLink</span>
+        </div>
+        <div>
+            <button class="btn-outline-light" id="navLoginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+            <button class="btn-primary-small" id="navSignupBtn"><i class="fas fa-user-plus"></i> Sign Up Free</button>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg-shape"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-fire"></i> #1 Dating App for Real Connections
+                </div>
+                <h1>Where <span class="gradient-text">Love</span> Finds Its Way</h1>
+                <p class="hero-sub">Join thousands of singles who found their perfect match on LoveLink. Smart matching, authentic profiles, and meaningful relationships start here.</p>
+                <div class="hero-buttons">
+                    <button class="btn-primary btn-large" id="heroSignupBtn"><i class="fas fa-heart"></i> Start Your Journey →</button>
+                    <button class="btn-outline btn-large" id="heroLearnBtn"><i class="fas fa-play-circle"></i> How it works</button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat"><span class="stat-number">2M+</span> <span>Happy Matches</span></div>
+                    <div class="stat"><span class="stat-number">15k+</span> <span>New Signups / Week</span></div>
+                    <div class="stat"><span class="stat-number">92%</span> <span>Success Rate</span></div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="floating-card card-1">
+                    <i class="fas fa-comment-dots"></i> "Matched yesterday! 💕"
+                </div>
+                <div class="floating-card card-2">
+                    <i class="fas fa-check-circle"></i> Verified Profile
+                </div>
+                <div class="phone-mockup">
+                    <div class="mockup-inner">
+                        <div class="mockup-header"><i class="fas fa-heart"></i> LoveLink</div>
+                        <div class="match-card">
+                            <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="match">
+                            <div><strong>Emma, 26</strong><br>Loves hiking & coffee</div>
+                        </div>
+                        <div class="match-card">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="match">
+                            <div><strong>James, 29</strong><br>Musician, adventurer</div>
+                        </div>
+                        <div class="chat-bubble">You both like travel ✨</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Why LoveLink?</span>
+                <h2>Designed for <span class="gradient-text">Real Connections</span></h2>
+                <p>We combine psychology-based matching with modern features to help you find someone truly compatible.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-brain"></i></div>
+                    <h3>Smart AI Matching</h3>
+                    <p>Our algorithm learns your preferences and suggests people you'll genuinely connect with.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Verified Profiles</h3>
+                    <p>No bots, no fakes. Every profile is manually or AI-verified for safety.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-video"></i></div>
+                    <h3>Video Dates</h3>
+                    <p>Virtual dates with icebreaker games. Feel safe before meeting in person.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-globe"></i></div>
+                    <h3>Global & Local</h3>
+                    <p>Find love nearby or anywhere in the world. Filter by city, interests, and lifestyle.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section (Social Proof) -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Success Stories</span>
+                <h2>Real Love <span class="gradient-text">Starts Here</span></h2>
+            </div>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p>"I was skeptical at first, but within two weeks I met Sarah. We're celebrating our first anniversary next month!"</p>
+                    <div class="testimonial-author">
+                        <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="user">
+                        <div><strong>Michael, 34</strong><br>Found Love</div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p>"LoveLink’s matching system is incredible. I dated around but finally found my person. Highly recommended!"</p>
+                    <div class="testimonial-author">
+                        <img src="https://randomuser.me/api/portraits/women/33.jpg" alt="user">
+                        <div><strong>Jessica, 28</strong><br>Premium Member</div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p>"I’ve tried other apps but LoveLink feels genuine. The community is respectful and the features are amazing."</p>
+                    <div class="testimonial-author">
+                        <img src="https://randomuser.me/api/portraits/men/52.jpg" alt="user">
+                        <div><strong>David, 41</strong><br>Happy Partner</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action - Premium / Signup -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <h2>Ready to find your <span class="gradient-text">perfect match</span>?</h2>
+            <p>Join LoveLink today — it's free to start. Thousands have found love, and your story is waiting.</p>
+            <div class="cta-buttons">
+                <button class="btn-primary btn-large" id="ctaSignupBtn"><i class="fas fa-heart"></i> Create Free Account</button>
+                <button class="btn-outline-light btn-large" id="ctaLearnMore">Learn More →</button>
+            </div>
+            <div class="trust-badge">
+                <i class="fas fa-lock"></i> 100% secure & private • No hidden fees
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-heart" style="font-size: 2rem; color: #ff4d6d;"></i>
+                <h3>LoveLink</h3>
+                <p>Making love connections since 2020. Millions of happy hearts.</p>
+            </div>
+            <div class="footer-links">
+                <div>
+                    <h4>About</h4>
+                    <a href="#" class="footer-link" data-modal="how-it-works">How it works</a>
+                    <a href="#" class="footer-link" data-modal="safety-tips">Safety tips</a>
+                    <a href="#" class="footer-link" data-modal="success-stories">Success stories</a>
+                </div>
+                <div>
+                    <h4>Support</h4>
+                    <a href="#" class="footer-link" data-modal="help-center">Help center</a>
+                    <a href="#" class="footer-link" data-modal="community-rules">Community rules</a>
+                    <a href="#" class="footer-link" data-modal="contact-us">Contact us</a>
+                </div>
+                <div>
+                    <h4>Legal</h4>
+                    <a href="#" class="footer-link" data-modal="privacy">Privacy</a>
+                    <a href="#" class="footer-link" data-modal="terms">Terms of use</a>
+                    <a href="#" class="footer-link" data-modal="cookie-policy">Cookie policy</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 LoveLink Premium – Where love connects.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Footer Modals Container (will be populated by JS) -->
+<div id="footerModalsContainer"></div>
+
+    <!-- Modal for Login/Signup (Lightbox to redirect or embed) -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modalAuthContainer">
+                <!-- Dynamic content will be loaded from auth.html or inline forms -->
+                <div style="text-align: center; padding: 20px;">
+                    <i class="fas fa-heart" style="font-size: 3rem; color: #ff4d6d;"></i>
+                    <h2>Welcome to LoveLink</h2>
+                    <p>Please login or create a free account</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                        <button id="modalLoginBtn" class="btn-outline">Login</button>
+                        <button id="modalSignupBtn" class="btn-primary">Sign Up Free</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!-- admin-dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | LoveLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="admin-dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-heart"></i>
+                    <span>LoveLink</span>
+                </div>
+                <div class="admin-badge">Admin Portal</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="#" class="nav-item" data-page="reports">
+                    <i class="fas fa-flag"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item" data-page="messages">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>Messages</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>System Settings</span>
+                </a>
+                <a href="#" class="nav-item" data-page="admins">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin Management</span>
+                </a>
+                <!-- Add this inside the sidebar-nav section, before the settings item -->
+             <a href="#" class="nav-item" data-page="contacts">
+            <i class="fas fa-envelope"></i>
+            <span>Contact Messages</span>
+              </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button id="adminLogoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="admin-header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="admin-info">
+                    <i class="fas fa-user-shield"></i>
+                    <div>
+                        <div id="adminEmailDisplay" style="font-weight:600;font-size:0.9rem;color:#1a1a2e;"></div>
+                        <div id="adminRoleDisplay" style="font-size:0.75rem;color:#aaa;text-transform:capitalize;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="pageContent" class="page-content">
+                <!-- Dynamic content loads here -->
+            </div>
+        </main>
+    </div>
+    
+    <!-- User Details Modal (for viewing chat history) -->
+    <div id="userDetailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3><i class="fas fa-user"></i> User Details & Chat History</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="userDetailsContent"></div>
+        </div>
+    </div>
+    
+    <!-- Edit Premium Amounts Modal -->
+    <div id="editPremiumModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-dollar-sign"></i> Edit Premium Prices</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="editPremiumContent"></div>
+        </div>
+    </div>
+    
+    <script src="admin-dashboard.js"></script>
+</body>
+</html>

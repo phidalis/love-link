@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Complete Your Profile | LoveLink</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="profile.css">
+<!-- Firebase imports -->
+<script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+        }
+    }
+</script>
+
+<script type="module">
+    import { initializeApp } from "firebase/app";
+    import { getAuth, onAuthStateChanged } from "firebase/auth";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, getDocs, writeBatch } from "firebase/firestore";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyC_H3OGktcvRhUsM2g7O_vf4WFQ5ucZ0xw",
+        authDomain: "lovelink-97087.firebaseapp.com",
+        projectId: "lovelink-97087",
+        storageBucket: "lovelink-97087.firebasestorage.app",
+        messagingSenderId: "962378928673",
+        appId: "1:962378928673:web:aee8799e9f824afa2fc960"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    window.auth = getAuth(app);
+    window.db = getFirestore(app);
+    
+    // Export Firestore functions to window
+    window.doc = doc;
+    window.getDoc = getDoc;
+    window.setDoc = setDoc;
+    window.updateDoc = updateDoc;
+    window.addDoc = addDoc;
+    window.collection = collection;
+    window.getDocs = getDocs;
+    window.writeBatch = writeBatch;
+    
+    console.log("Firebase initialized in profile");
+</script>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <i class="fas fa-heart" style="font-size:2.5rem;color:rgba(255,255,255,0.9);"></i>
+                <h1>Complete Your Profile</h1>
+                <p>Help us find your perfect match ✨</p>
+            </div>
+
+            <form id="profileForm">
+                <!-- Basic Info -->
+                <div class="form-section">
+                    <h3><i class="fas fa-user-circle"></i> Basic Information</h3>
+                    <div class="form-group">
+                        <label>Profile Photo</label>
+                        <div class="photo-upload">
+                            <div class="photo-preview" id="photoPreview">
+                                <img id="profileImage" src="" alt="Profile">
+                            </div>
+                            <button type="button" class="btn-outline" id="uploadPhotoBtn">
+                                <i class="fas fa-camera"></i> Upload Photo
+                            </button>
+                            <input type="file" id="photoInput" accept="image/*" style="display:none;">
+                        </div>
+                    </div>
+
+                    <!-- Gallery Upload -->
+                    <div class="form-group">
+                        <label>Gallery Photos <span style="color:#aaa;font-weight:400;">(up to 6 extra photos)</span></label>
+                        <div id="galleryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:12px;"></div>
+                        <button type="button" id="addGalleryBtn" class="btn-outline" style="display:flex;align-items:center;gap:8px;">
+                            <i class="fas fa-images"></i> <span>Add Photos (0/6)</span>
+                        </button>
+                        <input type="file" id="galleryInput" accept="image/*" multiple style="display:none;">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="fullName" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" id="age" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <input type="text" id="gender" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Looking For *</label>
+                            <select id="lookingFor" required>
+                                <option value="">Select...</option>
+                                <option value="Relationship">Long-term Relationship</option>
+                                <option value="Casual Dating">Casual Dating</option>
+                                <option value="Friendship">Friendship</option>
+                                <option value="Marriage">Marriage</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dating Preferences -->
+                <div class="form-section">
+                    <h3><i class="fas fa-heart"></i> Dating Preferences</h3>
+                    <div class="form-group">
+                        <label>What are you most passionate about? *</label>
+                        <select id="passion" required>
+                            <option value="">Select...</option>
+                            <option value="Career & Success">Career & Success</option>
+                            <option value="Family & Friends">Family & Friends</option>
+                            <option value="Travel & Adventure">Travel & Adventure</option>
+                            <option value="Health & Fitness">Health & Fitness</option>
+                            <option value="Arts & Culture">Arts & Culture</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ideal First Date *</label>
+                        <select id="firstDate" required>
+                            <option value="">Select...</option>
+                            <option value="Coffee & Conversation">Coffee & Conversation</option>
+                            <option value="Dinner at Nice Restaurant">Dinner at Nice Restaurant</option>
+                            <option value="Outdoor Activity">Outdoor Activity</option>
+                            <option value="Movie Night">Movie Night</option>
+                            <option value="Concert/Event">Concert/Event</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Deal Breakers</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="Smoking"> Smoking</label>
+                            <label><input type="checkbox" value="Drinking"> Heavy Drinking</label>
+                            <label><input type="checkbox" value="Distance"> Long Distance</label>
+                            <label><input type="checkbox" value="Different Values"> Different Values</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Describe your perfect partner *</label>
+                        <textarea id="perfectPartner" rows="3" placeholder="What qualities are you looking for?" required></textarea>
+                    </div>
+                </div>
+
+                <!-- Lifestyle -->
+                <div class="form-section">
+                    <h3><i class="fas fa-glass-cheers"></i> Lifestyle</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Exercise</label>
+                            <select id="exercise">
+                                <option value="Never">Never</option>
+                                <option value="Sometimes" selected>Sometimes</option>
+                                <option value="Regularly">Regularly</option>
+                                <option value="Very Active">Very Active</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Drinking</label>
+                            <select id="drinking">
+                                <option value="Never">Never</option>
+                                <option value="Socially" selected>Socially</option>
+                                <option value="Moderately">Moderately</option>
+                                <option value="Frequently">Frequently</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Smoking</label>
+                            <select id="smoking">
+                                <option value="Never" selected>Never</option>
+                                <option value="Occasionally">Occasionally</option>
+                                <option value="Regularly">Regularly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Dietary Preference</label>
+                            <select id="diet">
+                                <option value="Anything" selected>Anything</option>
+                                <option value="Vegetarian">Vegetarian</option>
+                                <option value="Vegan">Vegan</option>
+                                <option value="Keto">Keto</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscription -->
+                <div class="form-section subscription-section">
+                    <h3><i class="fas fa-crown"></i> Choose Your Plan</h3>
+                    <p class="section-note"><i class="fas fa-info-circle"></i> Free users get 5 minutes daily, then locked out for 12 hours. Upgrade for unlimited access!</p>
+
+                    <div class="packages">
+                        <div class="package" id="freePackage">
+                            <div class="package-header">
+                                <i class="fas fa-user"></i>
+                                <h3>Free</h3>
+                            </div>
+                            <div class="package-price">$0</div>
+                            <ul>
+                                <li><i class="fas fa-clock"></i> 5 minutes/day</li>
+                                <li><i class="fas fa-heart"></i> 5 likes/day</li>
+                                <li><i class="fas fa-search"></i> Basic matching</li>
+                                <li><i class="fas fa-ban" style="color:#e57373;"></i> 12hr lockout after session</li>
+                            </ul>
+                            <button type="button" class="package-btn" data-plan="free">Select Free</button>
+                        </div>
+
+                        <div class="package premium" id="premiumPackage">
+                            <div class="popular-badge">POPULAR</div>
+                            <div class="package-header">
+                                <i class="fas fa-crown"></i>
+                                <h3>Premium</h3>
+                            </div>
+                            <div class="package-price">$19.99<span>/month</span></div>
+                            <ul>
+                                <li><i class="fas fa-infinity"></i> Unlimited access</li>
+                                <li><i class="fas fa-infinity"></i> Unlimited likes</li>
+                                <li><i class="fas fa-fire"></i> Admiration feature</li>
+                                <li><i class="fas fa-crown"></i> VIP badge</li>
+                            </ul>
+                            <button type="button" class="package-btn premium-btn" data-plan="premium">Upgrade to Premium</button>
+                        </div>
+
+                        <div class="package" id="premiumPlusPackage">
+                            <div class="package-header">
+                                <i class="fas fa-gem"></i>
+                                <h3>Premium+</h3>
+                            </div>
+                            <div class="package-price">$29.99<span>/month</span></div>
+                            <ul>
+                                <li><i class="fas fa-infinity"></i> All Premium features</li>
+                                <li><i class="fas fa-chart-line"></i> Profile boost</li>
+                                <li><i class="fas fa-check-circle"></i> Read receipts</li>
+                                <li><i class="fas fa-headset"></i> Priority support</li>
+                            </ul>
+                            <button type="button" class="package-btn" data-plan="premium_plus">Upgrade Now</button>
+                        </div>
+                    </div>
+
+                    <div class="selected-plan" id="selectedPlanDisplay" style="display:none;">
+                        <i class="fas fa-check-circle"></i> Selected: <span id="selectedPlanName"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-submit" id="submitProfile">
+                    <i class="fas fa-check-circle"></i> Complete Profile & Continue
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="profile.js"></script>
+</body>
+</html>
